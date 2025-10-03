@@ -14,7 +14,7 @@ load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
 client = genai.Client(api_key=api_key)
 
-max_iterations = 3
+max_iterations = 7
 last_response = None
 iteration = 0
 iteration_response = []
@@ -143,7 +143,9 @@ async def main():
                     DO NOT include any explanations or additional text.
                     Your entire response should be a single line starting with either FUNCTION_CALL: or FINAL_ANSWER:"""
 
-                query = """Find the ASCII values of characters in INDIA and then return sum of exponentials of those values. """
+                # query = """Find the ASCII values of characters in INDIA and then return sum of exponentials of those values. """
+                query = """Find the ASCII values of characters in INDIA and then return sum of exponentials of those values. 
+                            Then, Open autodraw and draw a rectangle in autodraw and then write the value of sum of exponentials inside it."""
                 print("Starting iteration loop...")
                 
                 # Use global iteration variables
@@ -276,28 +278,28 @@ async def main():
                         # await asyncio.sleep(1)
 
                         # Draw a rectangle
-                        result = await session.call_tool(
-                            "draw_rectangle",
-                            arguments={
-                                "x1": 200,
-                                "y1": 700,
-                                "x2": 1300,
-                                "y2": 500,
-                                "draw_button_x": 45,
-                                "draw_button_y": 375
-                            }
-                        )
-                        # print(result)
-                        print(result.content[0].text)
+                        # result = await session.call_tool(
+                        #     "draw_rectangle",
+                        #     arguments={
+                        #         "x1": 200,
+                        #         "y1": 700,
+                        #         "x2": 1300,
+                        #         "y2": 500,
+                        #         "draw_button_x": 45,
+                        #         "draw_button_y": 375
+                        #     }
+                        # )
+                        # # print(result)
+                        # print(result.content[0].text)
 
-                        # Draw rectangle and add text
-                        result = await session.call_tool(
-                            "add_text_in_rectangle",
-                            arguments={
-                                "text": response_text
-                            }
-                        )
-                        print(result.content[0].text)
+                        # # Draw rectangle and add text
+                        # result = await session.call_tool(
+                        #     "add_text_in_rectangle",
+                        #     arguments={
+                        #         "text": response_text
+                        #     }
+                        # )
+                        # print(result.content[0].text)
                         break
 
                     iteration += 1

@@ -202,16 +202,47 @@ def fibonacci_numbers(n: int) -> list:
         fib_sequence.append(fib_sequence[-1] + fib_sequence[-2])
     return fib_sequence[:n]
 
+@mcp.tool()
+def open_autodraw():
+    """
+    Open AutoDraw in Google Chrome on MacOS.
+    """
+    try:
+        if is_autodraw_open():
+            print("DEBUG: AutoDraw tab is already open.")
+            print("DEBUG: Switching to AutoDraw tab.")
+            switch_to_autodraw_tab()
+            return True
+        else:
+            print("DEBUG: AutoDraw not open, launching it.")
+            subprocess.run(['open', '-a', 'Google Chrome', 'https://www.autodraw.com'])
+            time.sleep(5)  # Wait for AutoDraw to load
+            return True
+    except Exception as e:
+        err = f"Error opening AutoDraw: {e}"
+        return {
+            "status": "error",
+            "message": err,
+            "content": [
+                TextContent(type="text", text=err)
+            ]
+        }
+
+
 # Draw a rectangle on autodraw.com tool
 @mcp.tool()
-def draw_rectangle(
-    x1: int, y1: int, x2: int, y2: int,
-    draw_button_x: int, draw_button_y: int
-) -> dict:
+def draw_rectangle() -> dict:
     """
-    Click the AutoDraw 'Draw' tool and draw a rectangle on the canvas.
+    Draws a rectangle in autodraw after ensuring the site is open.
     Returns both a JSON body and explicit content blocks.
     """
+    x1= 200
+    y1 = 700
+    x2 = 1300
+    y2 = 500
+    draw_button_x = 45
+    draw_button_y = 400
+
     try:
         if is_autodraw_open():
             print("DEBUG: AutoDraw tab is open, switching to it.")
@@ -263,7 +294,7 @@ def add_text_in_rectangle(
     text: str
 ) -> dict:
     """
-    Ensure AutoDraw is open (or open it), then select the text tool and type at pre-defined coordinates.
+    Writes text inside the drawn rectangle on autodraw
 
     Args:
       text: the string to type
