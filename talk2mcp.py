@@ -119,33 +119,48 @@ async def main():
                 print("Created system prompt...")
                 # import pdb; pdb.set_trace()
                 
-                system_prompt = f"""You are a math agent solving problems in iterations. You have access to various mathematical tools.
+                system_prompt = f"""You are a math agent solving problems in iterations. You have access to various mathematical tools and automation tools including AutoDraw and Gmail.
+
                     Available tools:
                     {tools_description}
 
                     You must respond with EXACTLY ONE line in one of these formats (no additional text):
                     1. For function calls:
                     FUNCTION_CALL: function_name|param1|param2|...
-                    
+
                     2. For final answers:
                     FINAL_ANSWER: [number]
 
                     Important:
                     - When a function returns multiple values, you need to process all of them
-                    - Only give FINAL_ANSWER when you have completed all necessary calculations
+                    - Only give FINAL_ANSWER when you have completed all necessary calculations AND automation tasks (drawing, emailing)
                     - Do not repeat function calls with the same parameters
+                    - For AutoDraw tools, use default coordinates unless specific positioning is needed
+                    - For Gmail, use the recipient and subject specified in the query
 
                     Examples:
                     - FUNCTION_CALL: add|5|3
                     - FUNCTION_CALL: strings_to_chars_to_int|INDIA
+                    - FUNCTION_CALL: draw_rectangle
+                    - FUNCTION_CALL: send_gmail_text|recipient@gmail.com|Subject|Body content
                     - FINAL_ANSWER: [42]
 
                     DO NOT include any explanations or additional text.
                     Your entire response should be a single line starting with either FUNCTION_CALL: or FINAL_ANSWER:"""
 
+
                 # query = """Find the ASCII values of characters in INDIA and then return sum of exponentials of those values. """
+                # query = """Find the ASCII values of characters in INDIA and then return sum of exponentials of those values. 
+                #             Then, Open autodraw and draw a rectangle in autodraw and then write the value of sum of exponentials inside it."""
+                # query = """Find the ASCII values of characters in INDIA and then return sum of exponentials of those values. 
+                #         Then, Open autodraw and draw a rectangle in autodraw and then write the value of sum of exponentials inside it.
+                #         Finally, send an email via Gmail API with the final result to priyankadantala123@gmail.com with subject '[Agent] INDIA ASCII Computation Result'."""
+                # query = """Send an email via Gmail API saying 'Hello, there! This is a test email' result to priyankadantala123@gmail.com with subject '[Agent] Test email'. Ensure it's sent by me"""
                 query = """Find the ASCII values of characters in INDIA and then return sum of exponentials of those values. 
-                            Then, Open autodraw and draw a rectangle in autodraw and then write the value of sum of exponentials inside it."""
+                            Then, Open autodraw and draw a rectangle in autodraw and then write the value of sum of exponentials inside it.
+                            Finally, Craft a short but energentic email about what the approach of sum of exponentials and it's final result
+                            and send it from me to add_email@domain.com with an appropriate subject"""
+
                 print("Starting iteration loop...")
                 
                 # Use global iteration variables

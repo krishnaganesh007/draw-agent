@@ -9,6 +9,19 @@ import sys
 import subprocess
 import time
 import pyautogui
+
+# Packages for sending a mail
+import os
+import base64
+from email.message import EmailMessage
+from typing import Optional
+
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+
 # import logging as log
 # log.basicConfig(level=log.INFO)
 
@@ -22,6 +35,43 @@ import pyautogui
 mcp = FastMCP("Calculator")
 
 # Define Support Functions
+GMAIL_SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
+
+def _get_gmail_creds(
+    client_secret_path: str = "client_secret.json", 
+    token_path: str = "token.json"
+) -> Credentials:
+    """Get or refresh Gmail API credentials."""
+    creds = None
+    
+    # Load existing token
+    if os.path.exists(token_path):
+        creds = Credentials.from_authorized_user_file(token_path, GMAIL_SCOPES)
+    
+    # Refresh or get new credentials
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            if not os.path.exists(client_secret_path):
+                raise FileNotFoundError(f"Missing OAuth client file: {client_secret_path}")
+            flow = InstalledAppFlow.from_client_secrets_file(client_secret_path, GMAIL_SCOPES)
+            creds = flow.run_local_server(port=0)
+        
+        # Save token for next run
+        with open(token_path, "w") as f:
+            f.write(creds.to_json())
+    
+    return creds
+
+def _build_gmail_service(creds: Credentials):
+    """Build Gmail API service."""
+    return build("gmail", "v1", credentials=creds)
+
+def _encode_email_message(msg: EmailMessage) -> dict:
+    """Encode email message for Gmail API."""
+    raw = base64.urlsafe_b64encode(msg.as_bytes()).decode("utf-8")
+    return {"raw": raw}
 
 def is_autodraw_open():
     applescript = '''
@@ -337,6 +387,69 @@ def add_text_in_rectangle(
         }
 
 
+
+@mcp.tool()
+def send_gmail_text(
+    to: str,
+    subject: str,
+    body: str,
+    sender: str = "me"
+) -> dict:
+    
+    client_secret_path = "client_secret.json"
+    token_path = "token.json"
+    """
+    Send a plain text email via Gmail API.
+    
+    Args:
+        to (str): Recipient email address.
+        subject (str): Email subject line.
+        body (str): Plain text email body.
+        sender (str, default="me"): Sender email ("me" uses authenticated account).
+    
+    Returns:ß
+        dict: Status and message ID or error details.
+    """
+    try:
+        # Get credentials and build service
+        creds = _get_gmail_creds(client_secret_path, token_path)
+        service = _build_gmail_service(creds)
+        
+        # Compose message
+        msg = EmailMessage()
+        msg["To"] = to
+        msg["From"] = sender
+        msg["Subject"] = subject
+        msg.set_content(body)
+        
+        # Send
+        message_body = _encode_email_message(msg)
+        resp = service.users().messages().send(userId="me", body=message_body).execute()
+        
+        message_id = resp.get("id")
+        success_msg = f"Email sent successfully to {to}. Message ID: {message_id}"
+        
+        return {
+            "status": "success",
+            "message": success_msg,
+            "message_id": message_id,
+            "content": [TextContent(type="text", text=success_msg)]
+        }
+        
+    except HttpError as e:
+        error_msg = f"Gmail API error: {e}"
+        return {
+            "status": "error", 
+            "message": error_msg,
+            "content": [TextContent(type="text", text=error_msg)]
+        }
+    except Exception as e:
+        error_msg = f"Error sending email: {e}"
+        return {
+            "status": "error",
+            "message": error_msg, 
+            "content": [TextContent(type="text", text=error_msg)]
+        }
 
 # @mcp.tool()
 # async def draw_rectangle(x1: int, y1: int, x2: int, y2: int) -> dict:
